@@ -403,21 +403,29 @@ class DiredBaseCommand:
     def is_hidden(self, filename, path, goto=''):
         if not (path or goto):  # special case for ThisPC
             return False
-        tests = self.view.settings().get('dired_hidden_files_patterns', ['.*'])
-        if isinstance(tests, str):
-            tests = [tests]
-        if any(fnmatch.fnmatch(filename, pattern) for pattern in tests):
-            return True
-        if sublime.platform() != 'windows':
-            return False
-        # check for attribute on windows:
-        try:
-            attrs = ctypes.windll.kernel32.GetFileAttributesW(join(path, goto, filename))
-            assert attrs != -1
-            result = bool(attrs & 2)
-        except (AttributeError, AssertionError):
-            result = False
-        return result
+        show_hidden = self.show_hidden
+        show_excluded = self.view.settings().get('dired_show_excluded_files', True)
+        is_hidden = False
+        if not show_hidden:
+            tests = self.view.settings().get('dired_hidden_files_patterns', ['.*'])
+            if isinstance(tests, str):
+                tests = [tests]
+            if any(fnmatch.fnmatch(filename, p) for p in tests):
+                is_hidden = True
+            if sublime.platform() == 'windows':
+                # check for attribute on windows:
+                try:
+                    attrs = ctypes.windll.kernel32.GetFileAttributesW(join(path, goto, filename))
+                    assert attrs != -1
+                    if bool(attrs & 2):
+                        is_hidden = True
+                except:
+                    pass
+        if not show_excluded:
+            tests = self.view.settings().get('folder_exclude_patterns', []) + self.view.settings().get('file_exclude_patterns', [])
+            if any(fnmatch.fnmatch(filename, p) for p in tests):
+                is_hidden = True
+        return is_hidden
 
     def try_listing_directory(self, path):
         '''Return tuple of two element
