@@ -400,44 +400,54 @@ class DiredBaseCommand:
         items += files
         return items
 
-    def is_hidden(self, filename, path, goto=''):
+    def is_hidden(self, filename, path, goto='', get_is_dir=False, dirs_only=False):
         if not (path or goto):  # special case for ThisPC
             return False
         show_hidden = self.show_hidden
         show_excluded = self.view.settings().get('dired_show_excluded_files', True)
         is_hidden = False
-        if not show_hidden:
+        fullpath = join(path, goto, filename)
+        is_dir = isdir(fullpath)
+        result = lambda: is_hidden if not get_is_dir else [is_hidden, is_dir]
+        if dirs_only and not is_dir:
+            return result()
+        if not is_hidden and not show_excluded:
+            if is_dir:
+                tests = self.view.settings().get('folder_exclude_patterns', [])
+                if any(fnmatch.fnmatch(filename, p) for p in tests):
+                    is_hidden = True
+            else:
+                tests = self.view.settings().get('file_exclude_patterns', [])
+                if any(fnmatch.fnmatch(filename, p) for p in tests):
+                    is_hidden = True
+        if not is_hidden and not show_hidden:
             tests = self.view.settings().get('dired_hidden_files_patterns', ['.*'])
             if isinstance(tests, str):
                 tests = [tests]
             if any(fnmatch.fnmatch(filename, p) for p in tests):
                 is_hidden = True
-            if sublime.platform() == 'windows':
+            if not is_hidden and sublime.platform() == 'windows':
                 # check for attribute on windows:
                 try:
-                    attrs = ctypes.windll.kernel32.GetFileAttributesW(join(path, goto, filename))
+                    attrs = ctypes.windll.kernel32.GetFileAttributesW(fullpath)
                     assert attrs != -1
                     if bool(attrs & 2):
                         is_hidden = True
                 except:
                     pass
-        if not show_excluded:
-            tests = self.view.settings().get('folder_exclude_patterns', []) + self.view.settings().get('file_exclude_patterns', [])
-            if any(fnmatch.fnmatch(filename, p) for p in tests):
-                is_hidden = True
-        return is_hidden
+        return result()
 
-    def try_listing_directory(self, path):
+    def try_listing_directory(self, path, dirs_only=False):
         '''Return tuple of two element
             items  sorted list of filenames in path, or empty list
             error  exception message, or empty string
         '''
         items, error = [], ''
         try:
-            if not self.show_hidden:
-                items = [name for name in os.listdir(path) if not self.is_hidden(name, path)]
+            if dirs_only:
+                items = [name for name in os.listdir(path) if self.is_hidden(name, path, get_is_dir=True) == (False, False)]
             else:
-                items = os.listdir(path)
+                items = [name for name in os.listdir(path) if not self.is_hidden(name, path)]
         except OSError as e:
             error = str(e)
             if NT:
@@ -452,9 +462,7 @@ class DiredBaseCommand:
     def try_listing_only_dirs(self, path):
         '''Same as self.try_listing_directory, but items contains only directories.
         Used for prompt completion'''
-        items, error = self.try_listing_directory(path)
-        if items:
-            items = [n for n in items if isdir(join(path, n))]
+        items, error = self.try_listing_directory(path, dirs_only=True)
         return (items, error)
 
     def restore_marks(self, marked=None):
