@@ -450,7 +450,10 @@ class DiredBaseCommand:
         '''
         items, error = [], ''
         try:
-            items = [name for name in os.listdir(path) if self.is_hidden(name, path, get_is_dir=True, dirs_only=dirs_only) == [False, dirs_only]]
+            if dirs_only:
+                items = [name for name in os.listdir(path) if self.is_hidden(name, path, get_is_dir=True) == (False, False)]
+            else:
+                items = [name for name in os.listdir(path) if not self.is_hidden(name, path)]
             print('items', items)
         except OSError as e:
             error = str(e)
