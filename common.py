@@ -408,9 +408,6 @@ class DiredBaseCommand:
         is_hidden = False
         fullpath = join(path, goto, filename)
         is_dir = isdir(fullpath)
-        print('===============================')
-        print('filename', filename)
-        print('is_dir', is_dir)
         result = lambda: is_hidden if not get_is_dir else [is_hidden, is_dir]
         if dirs_only and not is_dir:
             return result()
@@ -438,9 +435,6 @@ class DiredBaseCommand:
                         is_hidden = True
                 except:
                     pass
-        res = result()
-        print('res', res)
-        print('===============================')
         return result()
 
     def try_listing_directory(self, path, dirs_only=False):
@@ -454,7 +448,6 @@ class DiredBaseCommand:
                 items = [name for name in os.listdir(path) if self.is_hidden(name, path, get_is_dir=True) == (False, False)]
             else:
                 items = [name for name in os.listdir(path) if not self.is_hidden(name, path)]
-            print('items', items)
         except OSError as e:
             error = str(e)
             if NT:
