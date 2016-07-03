@@ -419,6 +419,25 @@ class DiredBaseCommand:
             result = False
         return result
 
+    def is_excluded(self, filename, path, goto=''):
+        if not (path or goto):  # special case for ThisPC
+            return False
+        tests = self.view.settings().get('dired_hidden_files_patterns', ['.*'])
+        if isinstance(tests, str):
+            tests = [tests]
+        if any(fnmatch.fnmatch(filename, pattern) for pattern in tests):
+            return True
+        if sublime.platform() != 'windows':
+            return False
+        # check for attribute on windows:
+        try:
+            attrs = ctypes.windll.kernel32.GetFileAttributesW(join(path, goto, filename))
+            assert attrs != -1
+            result = bool(attrs & 2)
+        except (AttributeError, AssertionError):
+            result = False
+        return result
+
     def try_listing_directory(self, path):
         '''Return tuple of two element
             items  sorted list of filenames in path, or empty list

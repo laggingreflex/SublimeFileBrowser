@@ -158,6 +158,7 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
         expanded = self.view.find_all(u'^\s*▾') if not reset_sels else []
         names = []
         self.show_hidden = self.view.settings().get('dired_show_hidden_files', True)
+        self.show_excluded = self.view.settings().get('dired_show_excluded_files', True)
         self.goto = goto
         if path == 'ThisPC\\':
             path, names = '', self.get_disks()
@@ -485,6 +486,7 @@ class DiredExpand(TextCommand, DiredBaseCommand):
         self.index = self.get_all()  # fold changed index, get a new one
 
         self.show_hidden = self.view.settings().get('dired_show_hidden_files', True)
+        self.show_excluded = self.view.settings().get('dired_show_excluded_files', True)
         self.sel = self.view.get_regions('marked')[0] if marked else list(self.view.sel())[0]
         line     = self.view.line(self.sel)
 
