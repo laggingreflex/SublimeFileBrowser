@@ -27,11 +27,13 @@ PARENT_SYM = u"⠤"
 
 
 def first(seq, pred):
+    print('common: first')
     '''similar to built-in any() but return the object instead of boolean'''
     return next((item for item in seq if pred(item)), None)
 
 
 def sort_nicely(names):
+    print('common: sort_nicely')
     """ Sort the given list in the way that humans expect.
     Source: http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html
     """
@@ -45,6 +47,7 @@ def print(*args, **kwargs):
         unicode literals among Python versions used in ST2.
         Redefining/tweaking built-in things is relatively safe; of course, when
         ST2 will become irrelevant, this def might be removed undoubtedly.
+        print('common: might')
     """
     if not (ST3 or NT):
         args = (s.encode('utf-8') if isinstance(s, unicode) else str(s) for s in args)
@@ -55,6 +58,7 @@ def print(*args, **kwargs):
 
 
 def set_proper_scheme(view):
+    print('common: set_proper_scheme')
     '''
     this is callback, it is not meant to be called directly
         view.settings().add_on_change('color_scheme', lambda: set_proper_scheme(view))
@@ -75,6 +79,7 @@ def set_proper_scheme(view):
 
 
 def calc_width(view):
+    print('common: calc_width')
     '''
     return float width, which must be
         0.0 < width < 1.0 (other values acceptable, but cause unfriendly layout)
@@ -97,6 +102,7 @@ def calc_width(view):
 
 
 def get_group(groups, nag):
+    print('common: get_group')
     '''
     groups  amount of groups in window
     nag     number of active group
@@ -112,6 +118,7 @@ def get_group(groups, nag):
 
 
 def relative_path(rpath):
+    print('common: relative_path')
     u'''rpath is either list or empty string (if list, we need only first item);
     return either empty string or rpath[0] (or its parent), e.g.
         foo/bar/ → foo/bar/
@@ -127,6 +134,7 @@ def relative_path(rpath):
 
 
 def hijack_window():
+    print('common: hijack_window')
     '''Execute on loading plugin or on new window open;
     allow to open FB automatically in ST3
     '''
@@ -145,21 +153,25 @@ class DiredBaseCommand:
     """
     @property
     def path(self):
+        print('common: path')
         return self.view.settings().get('dired_path')
 
     def get_path(self):
+        print('common: get_path')
         path = self.path
         if path == 'ThisPC\\':
             path = ''
         return path
 
     def filecount(self):
+        print('common: filecount')
         """
         Returns the number of files and directories in the view.
         """
         return self.view.settings().get('dired_count', 0)
 
     def move_to_extreme(self, extreme="bof"):
+        print('common: move_to_extreme')
         """
         Moves the cursor to the beginning or end of file list.  Clears all sections.
         """
@@ -174,6 +186,7 @@ class DiredBaseCommand:
         self.view.show_at_center(ext_region)
 
     def move(self, forward=None):
+        print('common: move')
         """
         Moves the cursor one line forward or backwards.  Clears all sections.
         """
@@ -195,6 +208,7 @@ class DiredBaseCommand:
         self.view.show(name_point, surroundings)
 
     def next_line(self, forward, pt, filergn):
+        print('common: next_line')
         '''Return Region of line for pt within filergn'''
         if filergn.contains(pt):
             # Try moving by one line.
@@ -206,6 +220,7 @@ class DiredBaseCommand:
         return self.view.line(pt)
 
     def _get_name_point(self, line):
+        print('common: _get_name_point')
         '''Return point at which filename starts (i.e. after icon & whitspace)'''
         scope = self.view.scope_name(line.a)
         if 'indent' in scope:
@@ -215,9 +230,11 @@ class DiredBaseCommand:
         return name_point
 
     def show_parent(self):
+        print('common: show_parent')
         return self.view.settings().get('dired_show_parent', False)
 
     def fileregion(self, with_parent_link=False):
+        print('common: fileregion')
         """
         Returns a region containing the lines containing filenames.
         If there are no filenames None is returned.
@@ -232,6 +249,7 @@ class DiredBaseCommand:
         return Region(all_items[0].a, all_items[~0].b)
 
     def get_parent(self, line, path):
+        print('common: get_parent')
         u'''
         Returns relative path for line
             • line is a region
@@ -241,9 +259,11 @@ class DiredBaseCommand:
         return self.get_fullpath_for(line).replace(path, '', 1)
 
     def get_fullpath_for(self, line):
+        print('common: get_fullpath_for')
         return self.index[self.view.rowcol(line.a)[0]]
 
     def get_all(self):
+        print('common: get_all')
         """
         Returns a list of all filenames in the view.
         dired_index is always supposed to represent current state of view,
@@ -257,9 +277,11 @@ class DiredBaseCommand:
         return index
 
     def get_all_relative(self, path):
+        print('common: get_all_relative')
         return [f.replace(path, '', 1) for f in self.get_all()]
 
     def get_selected(self, parent=True, full=False):
+        print('common: get_selected')
         """
         parent
             if False, returned list does not contain PARENT_SYM even if it is in view
@@ -281,6 +303,7 @@ class DiredBaseCommand:
         return names
 
     def get_marked(self, full=False):
+        print('common: get_marked')
         '''self.index should be assigned before call it'''
         if not self.filecount():
             return []
@@ -293,6 +316,7 @@ class DiredBaseCommand:
         return names
 
     def _mark(self, mark, regions):
+        print('common: _mark')
         """
         Marks the requested files.
 
@@ -333,6 +357,7 @@ class DiredBaseCommand:
             self.view.erase_regions('marked')
 
     def _get_lines(self, regions, within):
+        print('common: _get_lines')
         '''
         regions is a list of non-overlapping region(s), each may have many lines
         within  is a region which is supposed to contain each line
@@ -340,6 +365,7 @@ class DiredBaseCommand:
         return (line for line in itertools.chain(*(self.view.lines(r) for r in regions)) if within.contains(line))
 
     def set_ui_in_rename_mode(self, edit):
+        print('common: set_ui_in_rename_mode')
         header = self.view.settings().get('dired_header', False)
         if header:
             regions = self.view.find_by_selector('text.dired header.dired punctuation.definition.separator.dired')
@@ -357,6 +383,7 @@ class DiredBaseCommand:
         self.view.insert(edit, start, new_text)
 
     def set_status(self):
+        print('common: set_status')
         '''Update status-bar;
         self.show_hidden must be assigned before call it'''
         # if view isnot focused, view.window() may be None
@@ -374,6 +401,7 @@ class DiredBaseCommand:
         self.view.set_status("__FileBrowser__", status)
 
     def prepare_filelist(self, names, path, goto, indent):
+        print('common: prepare_filelist')
         '''About self.index see DiredRefreshCommand
         could be called from  DiredExpand.expand_single_folder
                      or from  DiredRefresh.continue_refresh
@@ -401,6 +429,7 @@ class DiredBaseCommand:
         return items
 
     def is_hidden(self, filename, path, goto=''):
+        print('common: is_hidden')
         if not (path or goto):  # special case for ThisPC
             return False
         tests = self.view.settings().get('dired_hidden_files_patterns', ['.*'])
@@ -420,6 +449,7 @@ class DiredBaseCommand:
         return result
 
     def try_listing_directory(self, path):
+        print('common: try_listing_directory')
         '''Return tuple of two element
             items  sorted list of filenames in path, or empty list
             error  exception message, or empty string
@@ -442,6 +472,7 @@ class DiredBaseCommand:
             return items, error
 
     def try_listing_only_dirs(self, path):
+        print('common: try_listing_only_dirs')
         '''Same as self.try_listing_directory, but items contains only directories.
         Used for prompt completion'''
         items, error = self.try_listing_directory(path)
@@ -450,6 +481,7 @@ class DiredBaseCommand:
         return (items, error)
 
     def restore_marks(self, marked=None):
+        print('common: restore_marks')
         if marked:
             # Even if we have the same filenames, they may have moved so we have to manually
             # find them again.
@@ -468,6 +500,7 @@ class DiredBaseCommand:
             self.view.erase_regions('marked')
 
     def restore_sels(self, sels=None):
+        print('common: restore_sels')
         '''
         sels is tuple of two elements:
             0 list of filenames
@@ -498,6 +531,7 @@ class DiredBaseCommand:
         return self._add_sels()
 
     def _find_in_view(self, item):
+        print('common: _find_in_view')
         '''item is Unicode'''
         fname = re.escape(basename(os.path.abspath(item)) or item.rstrip(os.sep))
         if item[~0] == os.sep:
@@ -509,6 +543,7 @@ class DiredBaseCommand:
         return self.view.find_all(u'%s%s%s' % (pattern, fname, sep))
 
     def _add_sels(self, sels=None):
+        print('common: _add_sels')
         self.view.sel().clear()
 
         if sels:
@@ -527,6 +562,7 @@ class DiredBaseCommand:
         self.view.show_at_center(s)
 
     def display_path(self, folder):
+        print('common: display_path')
         display = folder
         home = os.path.expanduser("~")
         if folder.startswith(home):

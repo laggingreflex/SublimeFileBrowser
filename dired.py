@@ -24,10 +24,12 @@ else:  # ST2 imports
 
 
 def reuse_view():
+    print('dired: reuse_view')
     return sublime.load_settings('dired.sublime-settings').get('dired_reuse_view', False)
 
 
 def plugin_loaded():
+    print('dired: plugin_loaded')
     if len(sublime.windows()) == 1 and len(sublime.windows()[0].views()) == 0:
         hijack_window()
 
@@ -62,6 +64,7 @@ class DiredCommand(WindowCommand, DiredBaseCommand):
     Prompt for a directory to display and display it.
     """
     def run(self, immediate=False, single_pane=False, project=False, other_group=False):
+        print('dired: run')
         path, goto = self._determine_path()
         if project:
             folders = self.window.folders()
@@ -82,6 +85,7 @@ class DiredCommand(WindowCommand, DiredBaseCommand):
             prompt.start('Directory:', self.window, path, self._show)
 
     def _show_folder(self, index, path, goto, single_pane, other_group):
+        print('dired: _show_folder')
         if index != -1:
             choice = self.window.folders()[index]
             if path == choice:
@@ -90,9 +94,11 @@ class DiredCommand(WindowCommand, DiredBaseCommand):
                 show(self.window, choice, single_pane=single_pane, other_group=other_group)
 
     def _show(self, path):
+        print('dired: _show')
         show(self.window, path)
 
     def _determine_path(self):
+        print('dired: _determine_path')
         '''Return (path, fname) so goto=fname to set cursor'''
         # Use the current view's directory if it has one.
         view = self.window.active_view()
@@ -136,6 +142,7 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
     substr is slow: https://github.com/SublimeTextIssues/Core/issues/882
     """
     def run(self, edit, goto='', to_expand=None, toggle=None, reset_sels=None):
+        print('dired: run')
         """
         goto
             Optional filename to put the cursor on; used only from "dired_up"
@@ -178,6 +185,7 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
             self.re_populate_view(edit, path, names, expanded, to_expand, toggle)
 
     def expand_goto(self, to_expand):
+        print('dired: expand_goto')
         '''e.g. self.goto = "a/b/c/d/", then to put cursor onto d, it should be
         to_expand = ["a/", "a/b/", "a/b/c/"] (items order in list dont matter)
         '''
@@ -190,6 +198,7 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
         return to_expand
 
     def re_populate_view(self, edit, path, names, expanded, to_expand, toggle):
+        print('dired: re_populate_view')
         '''Called when we know that some directories were (or/and need to be) expanded'''
         root = path
         for i, r in enumerate(expanded):
@@ -214,6 +223,7 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
         self.view.run_command('dired_call_vcs', {'path': path})
 
     def populate_view(self, edit, path, names):
+        print('dired: populate_view')
         '''Called when no directories were (or/and need to be) expanded'''
         if not path and names:  # open ThisPC
             self.continue_populate(edit, path, names)
@@ -229,6 +239,7 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
             self.continue_populate(edit, path, items)
 
     def continue_populate(self, edit, path, names):
+        print('dired: continue_populate')
         '''Called if there is no exception in self.populate_view'''
         self.sel = None
         self.set_status()
@@ -238,6 +249,7 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
         self.view.run_command('dired_call_vcs', {'path': path})
 
     def traverse_tree(self, root, path, indent, tree, expanded):
+        print('dired: traverse_tree')
         '''Recursively build list of filenames for self.re_populate_view'''
         if not path:  # special case for ThisPC, path is empty string
             items = [u'%s\\' % d for d in tree]
@@ -278,6 +290,7 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
         return tree
 
     def set_title(self, path):
+        print('dired: set_title')
         '''Update name of tab and return tuple of two elements
             text    list of two unicode obj (will be inserted before filenames in view) or empty list
             header  boolean, value of dired_header setting
@@ -299,6 +312,7 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
         return (text, header)
 
     def write(self, edit, fileslist):
+        print('dired: write')
         '''apply changes to view'''
         self.view.set_read_only(False)
         self.view.erase(edit, Region(0, self.view.size()))
@@ -311,6 +325,7 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
         self.view.settings().set('dired_index', self.index)
 
     def correcting_index(self, path, fileslist):
+        print('dired: correcting_index')
         '''Add leading elements to self.index (if any), we need conformity of
         elements in self.index and line numbers in view
         Return list of unicode objects that ready to be inserted in view
@@ -326,6 +341,7 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
         return text + fileslist
 
     def restore_selections(self, path):
+        print('dired: restore_selections')
         '''Set cursor(s) and mark(s)'''
         self.restore_marks(self.marked)
         if self.goto:
@@ -335,6 +351,7 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
         self.restore_sels(self.sels)
 
     def get_disks(self):
+        print('dired: get_disks')
         '''create list of disks on Windows for ThisPC folder'''
         names = []
         for s in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
@@ -348,17 +365,20 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
 
 class DiredNextLineCommand(TextCommand, DiredBaseCommand):
     def run(self, edit, forward=None):
+        print('dired: run')
         self.move(forward)
 
 
 class DiredMoveCommand(TextCommand, DiredBaseCommand):
     def run(self, edit, to="bof"):
+        print('dired: run')
         self.move_to_extreme(to)
 
 
 class DiredSelect(TextCommand, DiredBaseCommand):
     '''Common command for opening file/directory in existing view'''
     def run(self, edit, new_view=0, other_group=0, and_close=0):
+        print('dired: run')
         '''
         new_view     if True, open directory in new view, rather than existing one
         other_group  if True, create a new group (if need) and open file in this group
@@ -387,6 +407,7 @@ class DiredSelect(TextCommand, DiredBaseCommand):
                 window.focus_view(self.last_created_view)
 
     def goto_directory(self, filenames, window, new_view):
+        print('dired: goto_directory')
         '''If reuse view is turned on and the only item is a directory, refresh the existing view'''
         if new_view and reuse_view():
             return False
@@ -400,6 +421,7 @@ class DiredSelect(TextCommand, DiredBaseCommand):
         return False
 
     def open_item(self, fqn, window, new_view):
+        print('dired: open_item')
         if isdir(fqn):
             show(window, fqn, ignore_existing=new_view)
         elif exists(fqn):  # ignore 'item <error>'
@@ -408,6 +430,7 @@ class DiredSelect(TextCommand, DiredBaseCommand):
             sublime.status_message(u'File does not exist (%s)' % (basename(fqn.rstrip(os.sep)) or fqn))
 
     def focus_other_group(self, window):
+        print('dired: focus_other_group')
         '''call it when preview open in other group'''
         target_group = self._other_group(window, window.active_group())
         # set_view_index and focus are not very reliable
@@ -415,6 +438,7 @@ class DiredSelect(TextCommand, DiredBaseCommand):
         window.focus_group(target_group)
 
     def _other_group(self, w, nag):
+        print('dired: _other_group')
         '''
         creates new group if need and return index of the group where files
         shall be opened
@@ -430,6 +454,7 @@ class DiredSelect(TextCommand, DiredBaseCommand):
 class DiredPreviewCommand(DiredSelect):
     '''Open file as a preview, so focus remains in FileBrowser view'''
     def run(self, edit):
+        print('dired: run')
         self.index = self.get_all()
         filenames = self.get_selected(full=True)
 
@@ -455,6 +480,7 @@ class DiredPreviewCommand(DiredSelect):
 class DiredExpand(TextCommand, DiredBaseCommand):
     '''Open directory(s) inline, aka treeview'''
     def run(self, edit, toggle=False):
+        print('dired: run')
         '''
         toggle  if True, state of directory(s) will be toggled (i.e. expand/collapse)
         '''
@@ -473,6 +499,7 @@ class DiredExpand(TextCommand, DiredBaseCommand):
             return sublime.status_message('Item cannot be expanded')
 
     def expand_single_directory(self, edit, filename, toggle):
+        print('dired: expand_single_directory')
         '''Expand one directory is save and fast, thus we do it here,
         but for many directories calling refresh command'''
         marked = self.get_marked()
@@ -513,6 +540,7 @@ class DiredExpand(TextCommand, DiredBaseCommand):
         self.view.run_command('dired_call_vcs', {'path': self.path})
 
     def try_to_fold(self, marked):
+        print('dired: try_to_fold')
         line = self.view.line(self.view.get_regions('marked')[0] if marked else
                               list(self.view.sel())[0])
         content = self.view.substr(line).lstrip()[0]
@@ -545,6 +573,7 @@ class DiredFold(TextCommand, DiredBaseCommand):
                     see DiredRefreshCommand docs for details
     '''
     def run(self, edit, update=None, index=None):
+        print('dired: run')
         '''
         update
             True when user mean to expand, i.e. no folding for collapsed directory even if indented
@@ -576,6 +605,7 @@ class DiredFold(TextCommand, DiredBaseCommand):
         self.restore_sels(self.seled)
 
     def fold(self, edit, line):
+        print('dired: fold')
         '''line is a Region, on which folding is supposed to happen (or not)'''
         line, indented_region = self.get_indented_region(line)
         if not indented_region:
@@ -584,6 +614,7 @@ class DiredFold(TextCommand, DiredBaseCommand):
         self.apply_change_into_view(edit, line, indented_region)
 
     def get_indented_region(self, line):
+        print('dired: get_indented_region')
         '''Return tuple:
             line
                 Region which shall NOT be erased, can be equal to argument line or less if folding
@@ -607,6 +638,7 @@ class DiredFold(TextCommand, DiredBaseCommand):
         this_in_next = next_region.contains(current_region)
 
         def __should_exit():
+            print('dired: __should_exit')
             collapsed_dir = self.update and (line_in_next or next_empty or this_in_next)
             item_in_root  = (not is_dir or next_empty) and this_empty
             return collapsed_dir or item_in_root
@@ -627,6 +659,7 @@ class DiredFold(TextCommand, DiredBaseCommand):
         return (line, indented_region)
 
     def apply_change_into_view(self, edit, line, indented_region):
+        print('dired: apply_change_into_view')
         '''set count and index, track marks/selections, replace icon, erase indented_region'''
         v = self.view
 
@@ -663,6 +696,7 @@ class DiredFold(TextCommand, DiredBaseCommand):
 
 class DiredUpCommand(TextCommand, DiredBaseCommand):
     def run(self, edit):
+        print('dired: run')
         path = self.path
         parent = dirname(path.rstrip(os.sep))
         if parent != os.sep and parent[1:] != ':\\':
@@ -686,9 +720,11 @@ class DiredGotoCommand(TextCommand, DiredBaseCommand):
     Prompt for a new directory.
     """
     def run(self, edit):
+        print('dired: run')
         prompt.start('Goto:', self.view.window(), self.path, self.goto)
 
     def goto(self, path):
+        print('dired: goto')
         show(self.view.window(), path, view_id=self.view.id())
 
 
@@ -696,6 +732,7 @@ class DiredGotoCommand(TextCommand, DiredBaseCommand):
 
 class DiredMarkExtensionCommand(TextCommand, DiredBaseCommand):
     def run(self, edit):
+        print('dired: run')
         filergn = self.fileregion()
         if filergn.empty():
             return
@@ -708,6 +745,7 @@ class DiredMarkExtensionCommand(TextCommand, DiredBaseCommand):
         pv.run_command("select_all")
 
     def on_done(self, ext):
+        print('dired: on_done')
         ext = ext.strip()
         if not ext:
             return
@@ -731,6 +769,7 @@ class DiredMarkCommand(TextCommand, DiredBaseCommand):
     successive files can be marked by repeating the mark key binding (e.g. 'm').
     """
     def run(self, edit, mark=True, markall=False, forward=True):
+        print('dired: run')
         assert mark in (True, False, 'toggle')
 
         filergn = self.fileregion()
@@ -759,6 +798,7 @@ class DiredMarkCommand(TextCommand, DiredBaseCommand):
 
 class DiredToggleHiddenFilesCommand(TextCommand):
     def run(self, edit):
+        print('dired: run')
         show = self.view.settings().get('dired_show_hidden_files', True)
         self.view.settings().set('dired_show_hidden_files', not show)
         self.view.run_command('dired_refresh')
@@ -767,6 +807,7 @@ class DiredToggleHiddenFilesCommand(TextCommand):
 # MOUSE INTERATIONS #################################################
 
 def dired_mouse(view, args):
+    print('dired: dired_mouse')
     s = view.settings()
     if s.get("dired_path") and not s.get("dired_rename_mode"):
         if 'directory' in view.scope_name(view.sel()[0].a):
@@ -784,8 +825,10 @@ def dired_mouse(view, args):
 if ST3:
     class DiredDoubleclickCommand(TextCommand, DiredBaseCommand):
         def run_(self, view, args):
+            print('dired: run_')
             dired_mouse(self.view, args)
 else:
     class DiredDoubleclickCommand(TextCommand, DiredBaseCommand):
         def run_(self, args):
+            print('dired: run_')
             dired_mouse(self.view, args)

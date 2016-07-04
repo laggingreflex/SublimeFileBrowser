@@ -26,6 +26,7 @@ else:  # ST2 imports
 
 class DiredFindInFilesCommand(TextCommand, DiredBaseCommand):
     def run(self, edit):
+        print('diredmisc: DiredFindInFilesCommand run')
         self.index = self.get_all()
         path = self.path
         if path == 'ThisPC\\':
@@ -42,6 +43,7 @@ class DiredFindInFilesCommand(TextCommand, DiredBaseCommand):
 
 class DiredHelpCommand(TextCommand):
     def run(self, edit):
+        print('diredmisc: DiredHelpCommand run')
         view = self.view.window().new_file()
         view.settings().add_on_change('color_scheme', lambda: set_proper_scheme(view))
         view.set_name("Browse: shortcuts")
@@ -62,6 +64,7 @@ class DiredHelpCommand(TextCommand):
 
 class DiredShowHelpCommand(TextCommand):
     def run(self, edit):
+        print('diredmisc: DiredShowHelpCommand run')
         COMMANDS_HELP = sublime.load_resource('Packages/FileBrowser/shortcuts.md') if ST3 else ''
         if not COMMANDS_HELP:
             dest = dirname(__file__)
@@ -77,6 +80,7 @@ class DiredShowHelpCommand(TextCommand):
 
 class DiredToggleProjectFolder(TextCommand, DiredBaseCommand):
     def run(self, edit):
+        print('diredmisc: DiredToggleProjectFolder run')
         if not ST3:
             return sublime.status_message('This feature is available only in Sublime Text 3')
         path = self.path.rstrip(os.sep)
@@ -92,6 +96,7 @@ class DiredToggleProjectFolder(TextCommand, DiredBaseCommand):
 
 class DiredOnlyOneProjectFolder(TextCommand, DiredBaseCommand):
     def run(self, edit):
+        print('diredmisc: DiredOnlyOneProjectFolder run')
         if not ST3:
             return sublime.status_message('This feature is available only in Sublime Text 3')
         path = self.path.rstrip(os.sep)
@@ -108,6 +113,7 @@ class DiredQuickLookCommand(TextCommand, DiredBaseCommand):
     quick look current file in mac or open in default app on other OSs
     """
     def run(self, edit, preview=True):
+        print('diredmisc: run')
         self.index = self.get_all()
         files = self.get_marked() or self.get_selected(parent=False)
         if not files:
@@ -134,6 +140,7 @@ class DiredQuickLookCommand(TextCommand, DiredBaseCommand):
 class DiredOpenExternalCommand(TextCommand, DiredBaseCommand):
     """open dir/file in external file explorer"""
     def run(self, edit):
+        print('diredmisc: run')
         path = self.path
         self.index = self.get_all()
         files = self.get_selected(parent=False)
@@ -156,6 +163,7 @@ class DiredOpenExternalCommand(TextCommand, DiredBaseCommand):
 
 class DiredOpenInNewWindowCommand(TextCommand, DiredBaseCommand):
     def run(self, edit, project_folder=False):
+        print('diredmisc: DiredOpenInNewWindowCommand run')
         if project_folder:
             files = project_folder
         else:
@@ -171,6 +179,7 @@ class DiredOpenInNewWindowCommand(TextCommand, DiredBaseCommand):
             self.launch_ST2(files)
 
         def run_on_new_window():
+            print('diredmisc: run_on_new_window')
             settings = sublime.load_settings('dired.sublime-settings')
             open_on_jump = settings.get('dired_open_on_jump', 'left')
 
@@ -187,6 +196,7 @@ class DiredOpenInNewWindowCommand(TextCommand, DiredBaseCommand):
             sublime.set_timeout(lambda: sublime.active_window().run_command("toggle_side_bar"), 200)
 
     def launch_ST3(self, files):
+        print('diredmisc: launch_ST3')
         executable_path = sublime.executable_path()
         if OSX:
             app_path = executable_path[:executable_path.rfind(".app/")+5]
@@ -195,6 +205,7 @@ class DiredOpenInNewWindowCommand(TextCommand, DiredBaseCommand):
         subprocess.Popen(items, cwd=None if NT else self.path)
 
     def launch_ST2(self, files):
+        print('diredmisc: launch_ST2')
         items = ["-n"] + files
         cwd = None if NT else self.path
         shell = False
@@ -204,6 +215,7 @@ class DiredOpenInNewWindowCommand(TextCommand, DiredBaseCommand):
             items = [i.encode(locale.getpreferredencoding(False)) if sys.getwindowsversion()[2] == 9200 else i for i in items]
 
         def app_path():
+            print('diredmisc: app_path')
             if OSX:
                 app_path = subprocess.Popen(["osascript", "-e" "tell application \"System Events\" to POSIX path of (file of process \"Sublime Text 2\" as alias)"], stdout=subprocess.PIPE).communicate()[0].rstrip()
                 subl_path = "{0}/Contents/SharedSupport/bin/subl".format(app_path)
@@ -228,6 +240,7 @@ class DiredOpenInNewWindowCommand(TextCommand, DiredBaseCommand):
 
 class DiredHijackNewWindow(EventListener):
     def on_window_command(self, window, command_name, args):
+        print('diredmisc: on_window_command')
         if command_name != "new_window":
             return
         hijack_window()
@@ -235,6 +248,7 @@ class DiredHijackNewWindow(EventListener):
 
 class DiredHideEmptyGroup(EventListener):
     def on_close(self, view):
+        print('diredmisc: on_close')
         if not 'dired' in view.scope_name(0):
             return
 
@@ -252,6 +266,7 @@ class DiredHideEmptyGroup(EventListener):
 
 class DiredMoveOpenOrNewFileToRightGroup(EventListener):
     def on_activated(self, view):
+        print('diredmisc: on_activated')
         '''
         Trick to prevent unexpected movements (e.g. when switching project in
         current window; or restart)
@@ -266,6 +281,7 @@ class DiredMoveOpenOrNewFileToRightGroup(EventListener):
             self.MOVE = False
 
     def on_new(self, view):
+        print('diredmisc: on_new')
         if not self.MOVE:
             return
         w = sublime.active_window()
@@ -285,6 +301,7 @@ class DiredMoveOpenOrNewFileToRightGroup(EventListener):
                 sublime.set_timeout(lambda: w.set_view_index(view, 1, index), 1)
 
     def on_load(self, view):
+        print('diredmisc: on_load')
         self.on_new(view)
 
 
@@ -293,12 +310,14 @@ class DiredMoveOpenOrNewFileToRightGroup(EventListener):
 class DiredCallVcs(TextCommand):
     '''Command allows to call it from other module(s)'''
     def run(self, edit, path):
+        print('diredmisc: run')
         CallVCS(self.view, path)
 
 
 class CallVCS(DiredBaseCommand):
     '''Magic'''
     def __init__(self, view, path):
+        print('diredmisc: __init__')
         self.view = view
         self.vcs_state = dict(path=path)
         self.view.erase_regions('M')
@@ -308,6 +327,7 @@ class CallVCS(DiredBaseCommand):
         self.watch_threads()
 
     def watch_threads(self):
+        print('diredmisc: watch_threads')
         '''wait while all checks are done'''
         if not all(vcs in self.vcs_state for vcs in ['git', 'hg']):
             sublime.set_timeout(self.watch_threads, 100)
@@ -316,6 +336,7 @@ class CallVCS(DiredBaseCommand):
             self.vcs_colorized(self.vcs_state['changed_items'])
 
     def start(self, vcs):
+        print('diredmisc: start')
         '''launch threads'''
         command = self.view.settings().get('%s_path' % vcs, '')
         if command:  # user can set empty string to disable integration with vcs
@@ -325,6 +346,7 @@ class CallVCS(DiredBaseCommand):
             self.vcs_state.update({vcs: False})
 
     def check(self, vcs, command):
+        print('diredmisc: check')
         '''target function for a thread; worker'''
         status, root = self.get_output(vcs, self.expand_command(vcs, command))
         if status and root:
@@ -335,6 +357,7 @@ class CallVCS(DiredBaseCommand):
             self.vcs_state.update({vcs: False})
 
     def expand_command(self, vcs, command):
+        print('diredmisc: expand_command')
         '''check if user got wildcards or envvars in custom command'''
         if any(c for c in '~*?[]$%' if c in command) and not isfile(command):
             match = glob.glob(os.path.expandvars(os.path.expanduser(command)))
@@ -348,6 +371,7 @@ class CallVCS(DiredBaseCommand):
         return command
 
     def get_output(self, vcs, command):
+        print('diredmisc: get_output')
         '''call a vsc, getting its output if any'''
         args = {'git_status': ['status', '--untracked-files=all', '-z'],
                 'git_root':   ['rev-parse', '--show-toplevel'],
@@ -368,12 +392,14 @@ class CallVCS(DiredBaseCommand):
         return (status, root)
 
     def set_value(self, vcs, root, item):
+        print('diredmisc: set_value')
         '''return tuple (fullpath, status)'''
         item = item[1:] if vcs == 'git' else item
         filename = (item[2:] if ST3 else unicode(item[2:], 'utf-8'))
         return (join(root, filename), item[0])
 
     def vcs_colorized(self, changed_items):
+        print('diredmisc: vcs_colorized')
         '''called on main thread'''
         if not self.view.settings().has('dired_index'):
             return  # view was closed
