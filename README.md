@@ -301,6 +301,13 @@ such patterns:
 { "dired_hidden_files_patterns": [".*", "__pycache__", "*.pyc"] }
 ```
 
+It also shows all files and directories otherwise excluded by your `file_exclude_patterns` and `folder_exclude_patterns`.
+
+To hide excluded files and folders, add the following to your settings:
+``` json
+{ "dired_show_excluded_files": false }
+```
+
 ### VCS integration
 In case `git status`(or `hg status`) returns a colorable output in current directory, the modified
 and untracked files will be designated by orange and green icons respectively.

@@ -226,6 +226,7 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
                              u'\t<%s>' % error)
             self.view.set_read_only(True)
         else:
+            items = [file['file'] for file in items]
             self.continue_populate(edit, path, items)
 
     def continue_populate(self, edit, path, names):
@@ -260,10 +261,11 @@ class DiredRefreshCommand(TextCommand, DiredBaseCommand):
 
         files = []
         index_files = []
-        for f in items:
+        for item in items:
+            f = item['file']
             new_path = join(path, f)
             dir_path = u'%s%s' % (new_path.rstrip(os.sep), os.sep)
-            check = isdir(new_path)
+            check = item['is_dir'] == True
             if check and dir_path in expanded:
                 self.traverse_tree(root, dir_path, indent + '\t', tree, expanded)
             elif check:
@@ -497,6 +499,7 @@ class DiredExpand(TextCommand, DiredBaseCommand):
         if error:
             replacement = [u'%s\t<%s>' % (root, error)]
         elif items:
+            items = [file['file'] for file in items]
             replacement = [root] + self.prepare_filelist(items, '', filename, '\t')
             dired_count = self.view.settings().get('dired_count', 0)
             self.view.settings().set('dired_count', dired_count + len(items))

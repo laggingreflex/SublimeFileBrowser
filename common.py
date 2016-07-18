@@ -36,9 +36,8 @@ def sort_nicely(names):
     Source: http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html
     """
     convert = lambda text: int(text) if text.isdigit() else text.lower()
-    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key['file'] if key['file'] else key)]
     names.sort(key=alphanum_key)
-
 
 def print(*args, **kwargs):
     """ Redefine print() function; the reason is the inconsistent treatment of
@@ -400,54 +399,77 @@ class DiredBaseCommand:
         items += files
         return items
 
-    def is_hidden(self, filename, path, goto=''):
+    def is_hidden(self, item, path, goto='', get_is_dir=False, dirs_only=False):
         if not (path or goto):  # special case for ThisPC
             return False
-        tests = self.view.settings().get('dired_hidden_files_patterns', ['.*'])
-        if isinstance(tests, str):
-            tests = [tests]
-        if any(fnmatch.fnmatch(filename, pattern) for pattern in tests):
-            return True
-        if sublime.platform() != 'windows':
-            return False
-        # check for attribute on windows:
-        try:
-            attrs = ctypes.windll.kernel32.GetFileAttributesW(join(path, goto, filename))
-            assert attrs != -1
-            result = bool(attrs & 2)
-        except (AttributeError, AssertionError):
-            result = False
-        return result
+        show_hidden = self.show_hidden
+        show_excluded = self.view.settings().get('dired_show_excluded_files', True)
+        is_hidden = False
+        filename = item['file']
+        fullpath = join(path, goto, filename)
+        is_dir = item['is_dir']
+        result = lambda: is_hidden if not get_is_dir else [is_hidden, is_dir]
+        if dirs_only and not is_dir:
+            return result()
+        if not is_hidden and not show_excluded:
+            if is_dir:
+                tests = self.view.settings().get('folder_exclude_patterns', [])
+                if any(fnmatch.fnmatch(filename, p) for p in tests):
+                    is_hidden = True
+            else:
+                tests = self.view.settings().get('file_exclude_patterns', [])
+                if any(fnmatch.fnmatch(filename, p) for p in tests):
+                    is_hidden = True
+        if not is_hidden and not show_hidden:
+            tests = self.view.settings().get('dired_hidden_files_patterns', ['.*'])
+            if isinstance(tests, str):
+                tests = [tests]
+            if any(fnmatch.fnmatch(filename, p) for p in tests):
+                is_hidden = True
+            if not is_hidden and NT:
+                # check for attribute on windows:
+                try:
+                    attrs = ctypes.windll.kernel32.GetFileAttributesW(fullpath)
+                    assert attrs != -1
+                    if bool(attrs & 2):
+                        is_hidden = True
+                except:
+                    pass
+        return result()
 
-    def try_listing_directory(self, path):
+    def listdir(self, path):
+        return [{'file': file, 'is_dir': isdir(join(path, file))} for file in os.listdir(path)]
+
+    def listdir_only_dirs(self, path):
+        return [item for item in self.listdir(path) if item["isdir"] == True]
+
+    def try_listing_directory(self, path, dirs_only=False):
         '''Return tuple of two element
             items  sorted list of filenames in path, or empty list
             error  exception message, or empty string
         '''
-        items, error = [], ''
+        items = []
+        error = None
         try:
-            if not self.show_hidden:
-                items = [name for name in os.listdir(path) if not self.is_hidden(name, path)]
+            if dirs_only:
+                items = self.listdir_only_dirs(path)
             else:
-                items = os.listdir(path)
+                items = self.listdir(path)
         except OSError as e:
             error = str(e)
             if NT:
                 error = error.split(':')[0].replace('[Error 5] ', 'Access denied').replace('[Error 3] ', 'Not exists, press r to refresh')
             if not ST3 and LIN:
                 error = error.decode('utf8')
-        else:
+        if (error == None):
+            items = [item for item in items if not self.is_hidden(item, path)]
             sort_nicely(items)
-        finally:
-            return items, error
+        return items, error
 
     def try_listing_only_dirs(self, path):
         '''Same as self.try_listing_directory, but items contains only directories.
         Used for prompt completion'''
-        items, error = self.try_listing_directory(path)
-        if items:
-            items = [n for n in items if isdir(join(path, n))]
-        return (items, error)
+        return self.try_listing_directory(path, dirs_only=True)
 
     def restore_marks(self, marked=None):
         if marked:

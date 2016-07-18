@@ -125,10 +125,11 @@ class DiredCompleteCommand(TextCommand, DiredBaseCommand):
         '''return tuple (completion(list, may be empty), error(boolean))'''
         # self.view is prompt, so get settings of active view in active window
         self.show_hidden = sublime.active_window().active_view().settings().get('dired_show_hidden_files', True)
-        dirs, error = self.try_listing_only_dirs(path)
+        items, error = self.try_listing_only_dirs(path)
         if error:
             sublime.error_message(u'FileBrowser:\n\n Content is unavailable\n\n\t%s\n\n\t%s' % (path, error))
             return ([], True)
+        dirs = [file['file'] for file in items]
         completions = [n for n in dirs if n.upper().startswith(prefix.upper())]
         return (completions, False)
 
